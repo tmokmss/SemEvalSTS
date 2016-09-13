@@ -1,6 +1,7 @@
 # coding: utf-8
 from svm import *
 from svmutil import *
+from data_classifier import *
 import sts
 import sys
 
@@ -24,6 +25,7 @@ def grid_search(data, label, test_data, test_label):
   for c in (1,2,5,10,20,50,100,200,500,1000):
     for g in (1,.5,.2,.1,.05,.02,.01):
       for p in (2,1,.5,.2,.1,.05,.02,.01,.005,.002):
+        print "c=%f, g=%f, p=%f" % (c, g, p)
         model = calculate_svr(data, label, c, g, p)
         _, p_acc, _ = svm_predict(test_label, test_data, model)
         corr = p_acc[2]
@@ -36,17 +38,31 @@ def grid_search(data, label, test_data, test_label):
 def predict_scores(model, data, labels=None):
   if labels is None:
     labels = [0 for x in data]
-  return svm_predict(labels, data, model)
+  return svm_predict(labels, data, model, options='-q')
 
-def load_model(modelpath):
-  return svm_load_model(modelpath)
+def load_model():
+  model = {}
+  for tclass in xrange(classNum):
+    suffix = to_string(tclass)
+    try:
+      model[suffix] = svm_load_model(get_model_name(tclass))
+    except:
+      # 無ければ必ずあるshortのモデルを使う
+      model[suffix] = svm_load_model(get_model_name(Short))
+  return model
 
-def predict_from_path(modelpath, inputpath, outputpath):
+def predict_from_path(inputpath, outputpath):
   te_data, _ = sts.main(inputpath)
-  model = load_model(modelpath)
-  p_labels, p_acc, p_vals = predict_scores(model, te_data)
-  print p_acc
-  write_result(p_labels, outputpath)
+  model = load_model()
+  tclasses = classify_from_path(inputpath)
+  param = svm_parameter('-q')
+  result = []
+  for i in xrange(classNum):
+    print to_string(i), tclasses.count(i)
+  for datum, tclass in zip(te_data, tclasses):
+    p_label, p_acc, p_val = predict_scores(model[to_string(tclass)], [datum])
+    result.append(*p_label)
+  write_result(result, outputpath)
 
 if (__name__ == '__main__'):
   if len(sys.argv) < 6:
@@ -54,26 +70,22 @@ if (__name__ == '__main__'):
     print >>sys.stderr, "  %s train.txt train_scores.txt test.txt test_scores.txt output.txt" % sys.argv[0]
     exit(1)
 
-  train_name = sys.argv[1]
-  train_score_name = sys.argv[2]
-  test_name = sys.argv[3]
-  test_score_name = sys.argv[4]
-  out_name = sys.argv[5]
+  train_name = sys.argv[1]  # 教師データ
+  train_score_name = sys.argv[2]  # 教師データのスコア
+  test_name = sys.argv[3] # テストデータ
+  test_score_name = sys.argv[4]  # テストデータのスコア
+  out_name = sys.argv[5]  # モデル出力
 
   tr_data, tr_score = sts.main(train_name, train_score_name)
   te_data, te_score = sts.main(test_name, test_score_name)
 
   #best = (2, 1, 0.002) # 0.01
-  best = (5, 0.2, 0.002) # 0.05増加
+  #best = (5, 0.2, 0.002) # 0.05増加
+  best = (20, 1, 1) # jointでの最適値
   #best = (10,1,0.5)    # 0.02
   if len(sys.argv) > 6:
     best = grid_search(tr_data, tr_score, te_data, te_score)
     print best
 
   model = calculate_svr(tr_data, tr_score, *best)
-  p_labels, p_acc, p_vals = predict_scores(model, te_data, te_score)
-  print p_acc # _, mean squared error, correlaton efficient
-
-  svm_save_model('model.txt', model)
-
-  write_result(p_labels, out_name)
+  svm_save_model(out_name, model)

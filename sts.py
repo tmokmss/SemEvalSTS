@@ -83,7 +83,6 @@ def calc_features(sa, sb):
   # 重要な品詞のみ抽出
   lema = get_lemmatized_words(sa)
   lemb = get_lemmatized_words(sb)
-  # print lema, lemb
 
   #auga = w2v.get_augmented_words(lema)
   #augb = w2v.get_augmented_words(lemb)

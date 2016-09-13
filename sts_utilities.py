@@ -50,7 +50,7 @@ def get_lemmatized_words(sa):
       # 複数形→単数形、過去形→現在形などの変換
       # utf-8に一旦変換しないと、wordnetの中でエラー吐く
       wlem = wordnet.morphy(w.decode('utf-8'), wtag) or w
-    rez.append(wlem)
+    rez.append(wlem.decode('utf-8'))
   return rez
 
 def get_original_form_words(sa):
