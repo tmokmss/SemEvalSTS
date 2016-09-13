@@ -50,6 +50,6 @@ def num_match(numa, numb):
   f1 = ngram_match(numa, numb, 1)
   # ちょいと強調する
   #return 3.125*f1**2 - 0.125*f1
-  if len(numa) == 0 && len(numb) == 0:
+  if len(numa) == 0 and len(numb) == 0:
     return 0.5
   return f1
