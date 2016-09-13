@@ -1,52 +1,19 @@
-#coding: utf-8
+# coding: utf-8
 # takelabのものを'参考'にした　http://takelab.fer.hr/sts/
 
-import math
 from nltk.corpus import wordnet
 import nltk
-from collections import Counter, defaultdict
 import sys
 import re
-import numpy
-from numpy.linalg import norm
-
-class Sim:
-  def __init__(self, words, vectors):
-    self.word_to_idx = {a: b for b, a in
-                        enumerate(w.strip() for w in open(words))}
-    self.mat = numpy.loadtxt(vectors)
-
-  def bow_vec(self, b):
-    vec = numpy.zeros(self.mat.shape[1])
-    for k, v in b.iteritems():
-      idx = self.word_to_idx.get(k, -1)
-      if idx >= 0:
-        vec += self.mat[idx] / (norm(self.mat[idx]) + 1e-8) * v
-    return vec
-
-  def calc(self, b1, b2):
-    v1 = self.bow_vec(b1)
-    v2 = self.bow_vec(b2)
-    return abs(v1.dot(v2) / (norm(v1) + 1e-8) / (norm(v2) + 1e-8))
-
-stopwords = set([
-"i", "a", "about", "an", "are", "as", "at", "be", "by", "for", "from",
-"how", "in", "is", "it", "of", "on", "or", "that", "the", "this", "to",
-"was", "what", "when", "where", "who", "will", "with", "the", "'s", "did",
-"have", "has", "had", "were", "'ll"
-])
-
-to_wordnet_tag = {
-  'NN':wordnet.NOUN,
-  'JJ':wordnet.ADJ,
-  'VB':wordnet.VERB,
-  'RB':wordnet.ADV
-}
-
-#nyt_sim = Sim('nyt_words.txt', 'nyt_word_vectors.txt')
-#wiki_sim = Sim('wikipedia_words.txt', 'wikipedia_word_vectors.txt')
+from sts_utilities import *
+import calculate_w2v as w2v
+import calculate_tfidf as tfidf
+from calculate_match import *
+from calculate_misc import *
 
 def fix_compounds(a, b):
+  # もしaのある連続した2単語の連結と同じ単語がbにあれば、連結する
+  # e.g. hoge hoge → hogehoge
   sb = set(x.lower() for x in b)
 
   a_fix = []
@@ -65,9 +32,8 @@ def fix_compounds(a, b):
 
 def load_data(path):
   sentences_pos = []
-  r1 = re.compile(r'\<([^ ]+)\>')
-  r2 = re.compile(r'\$US(\d)')
   for l in open(path):
+    # 行ごとに前処理→形態素解析
     l = l.decode('utf-8')
     l = l.replace(u'’', "'")
     l = l.replace(u'``', '"')
@@ -77,12 +43,13 @@ def load_data(path):
     l = l.replace(u"´", "'")
     l = l.replace(u"-", " ")
     l = l.replace(u"/", " ")
+    l = l.replace(u";", " ")
+    l = l.replace(u",", " ")
     #l = l.replace(u"é", "e")
-    l = r1.sub(r'\1', l)
-    l = r2.sub(r'$\1', l)
     s = l.strip().split('\t')
     sa, sb = tuple(nltk.word_tokenize(s)
               for s in l.strip().split('\t'))
+    # nltk.word_tokenizeによりpunctuationは分離される(isn't→is n'tなど)
     sa, sb = ([x.encode('utf-8') for x in sa],
           [x.encode('utf-8') for x in sb])
 
@@ -97,57 +64,6 @@ def load_data(path):
     # ('man', 'NN')のような、単語と品詞タグのタプルによる配列
   return sentences_pos
 
-word_matcher = re.compile('[^0-9,.(=)\[\]/_`]+$')
-def is_word(w):
-  # 数字や記号など、単語でないものはFalse
-  return word_matcher.match(w) is not None
-
-def get_locase_words(spos):
-  # 単語と品詞タグのタプルの配列から、単語のみ抽出して小文字に変換された配列を返す
-  return [x[0].lower() for x in spos
-      if is_word(x[0])]
-
-def get_lemmatized_words(sa):
-  # 見出し語の抽出（名詞、形容詞、動詞、副詞）
-  rez = []
-  for w, wpos in sa:
-    w = w.lower()
-    if w in stopwords or not is_word(w):
-      continue
-    wtag = to_wordnet_tag.get(wpos[:2])
-    if wtag is None:
-      wlem = w
-    else:
-      # 複数形→単数形、過去形→現在形などの変換
-      # utf-8に一旦変換しないと、wordnetの中でエラー吐く
-      wlem = wordnet.morphy(w.decode('utf-8'), wtag) or w
-    rez.append(wlem)
-  return rez
-
-def make_ngrams(l, n):
-  # 単語の配列lをngramのタプルの配列に変換
-  rez = [l[i:(-n + i + 1)] for i in xrange(n - 1)]
-  rez.append(l[n - 1:])
-  return zip(*rez)
-
-def ngram_match(sa, sb, n):
-  nga = make_ngrams(sa, n)
-  ngb = make_ngrams(sb, n)
-  matches = 0
-  c1 = Counter(nga)
-  for ng in ngb:
-    if c1[ng] > 0:
-      c1[ng] -= 1
-      matches += 1
-  p = 0.
-  r = 0.
-  f1 = 1.
-  if len(nga) > 0 and len(ngb) > 0:
-    p = matches / float(len(nga))
-    r = matches / float(len(ngb))
-    f1 = 2 * p * r / (p + r) if p + r > 0 else 0.
-  return f1
-
 def calc_features(sa, sb):
   # sa, sbは類似度を比較する文章
   # それぞれ単語と形態素のタプルの配列
@@ -156,6 +72,10 @@ def calc_features(sa, sb):
   olca = get_locase_words(sa)
   olcb = get_locase_words(sb)
 
+  numa = get_non_words(sa)
+  numb = get_non_words(sb)
+  # print numa, numb
+
   # ストップワードを除去
   lca = [w for w in olca if w not in stopwords]
   lcb = [w for w in olcb if w not in stopwords]
@@ -163,7 +83,11 @@ def calc_features(sa, sb):
   # 重要な品詞のみ抽出
   lema = get_lemmatized_words(sa)
   lemb = get_lemmatized_words(sb)
-  #print lema, lemb
+  # print lema, lemb
+
+  #auga = w2v.get_augmented_words(lema)
+  #augb = w2v.get_augmented_words(lemb)
+  #print auga, augb
 
   f = []
   #f += number_features(sa, sb)
@@ -176,19 +100,24 @@ def calc_features(sa, sb):
       ngram_match(lema, lemb, 1),
       ngram_match(lema, lemb, 2),
       ngram_match(lema, lemb, 3),
+      #ngram_match(auga, augb, 1),  # 語順めちゃくちゃなので1gramのみ
+      tfidf.get_tfidf_cos(lema, lemb),
+      #tfidf.get_tfidf_cos(auga, augb),
       #wn_sim_match(lema, lemb),
-      #weighted_word_match(olca, olcb),
-      #weighted_word_match(lema, lemb),
+      weighted_match(olca, olcb),
+      weighted_match(lema, lemb),
       #dist_sim(nyt_sim, lema, lemb),
       #dist_sim(wiki_sim, lema, lemb),
       #weighted_dist_sim(nyt_sim, lema, lemb),
       #weighted_dist_sim(wiki_sim, lema, lemb),
-      #relative_len_difference(lca, lcb),
-      #relative_ic_difference(olca, olcb)
+      relative_len_difference(lca, lcb),
+      #relative_ic_difference(olca, olcb),
+      num_match(numa, numb),
     ]
   return f
 
 def main(input_name, score_name=None):
+  print "starting", input_name
   scores = None
   if score_name != None:
     scores = [float(x) for x in open(score_name)]
@@ -202,6 +131,7 @@ def main(input_name, score_name=None):
     data_v.append(data)
     scores_v.append(y)
 
+  print "finished", input_name
   return data_v, scores_v
 
 if __name__ == "__main__":
@@ -219,10 +149,10 @@ if __name__ == "__main__":
 
   data, scores = main(input_name, score_name)
 
-  if (out_name != no):
-    fout = open(out_name, 'w')
-    for y, datum in zip(scores, data):
-      fvec =  ' '.join('%d:%f' % (i + 1, x) for i, x in
-                enumerate(datum))
-      fout.write(str(y) + ' ' + fvec + '\n')
-    fout.close()
+  #if (out_name != None):
+  #  fout = open(out_name, 'w')
+  #  for y, datum in zip(scores, data):
+  #    fvec =  ' '.join('%d:%f' % (i + 1, x) for i, x in
+  #              enumerate(datum))
+  #    fout.write(str(y) + ' ' + fvec + '\n')
+  #  fout.close()

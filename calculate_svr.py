@@ -48,7 +48,9 @@ if (__name__ == '__main__'):
   tr_data, tr_score = sts.main(train_name, train_score_name)
   te_data, te_score = sts.main(test_name, test_score_name)
 
-  best = (2, 1, 0.002)
+  #best = (2, 1, 0.002) # 0.01
+  best = (5, 0.2, 0.002) # 0.05増加
+  #best = (10,1,0.5)    # 0.02
   if len(sys.argv) > 6:
     best = grid_search(tr_data, tr_score, te_data, te_score)
     print best
@@ -57,6 +59,6 @@ if (__name__ == '__main__'):
   p_labels, p_acc, p_vals = svm_predict(te_score, te_data, model)
   print p_acc # _, mean squared error, correlaton efficient
 
-  svm_save_model('model.model', model)
+  svm_save_model('model.txt', model)
 
   write_result(p_labels, out_name)
