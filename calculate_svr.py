@@ -33,6 +33,21 @@ def grid_search(data, label, test_data, test_label):
   print 'bestcorr: ', bestcorr
   return bestparams
 
+def predict_scores(model, data, labels=None):
+  if labels is None:
+    labels = [0 for x in data]
+  return svm_predict(labels, data, model)
+
+def load_model(modelpath):
+  return svm_load_model(modelpath)
+
+def predict_from_path(modelpath, inputpath, outputpath):
+  te_data, _ = sts.main(inputpath)
+  model = load_model(modelpath)
+  p_labels, p_acc, p_vals = predict_scores(model, te_data)
+  print p_acc
+  write_result(p_labels, outputpath)
+
 if (__name__ == '__main__'):
   if len(sys.argv) < 6:
     print >>sys.stderr, "Usage: "
@@ -56,7 +71,7 @@ if (__name__ == '__main__'):
     print best
 
   model = calculate_svr(tr_data, tr_score, *best)
-  p_labels, p_acc, p_vals = svm_predict(te_score, te_data, model)
+  p_labels, p_acc, p_vals = predict_scores(model, te_data, te_score)
   print p_acc # _, mean squared error, correlaton efficient
 
   svm_save_model('model.txt', model)
