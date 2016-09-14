@@ -90,3 +90,4 @@ ENV/
 
 # txt files (too large to push)
 *.txt
+*.tsv

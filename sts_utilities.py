@@ -68,7 +68,7 @@ def load_wweight_table(path):
     freq = float(freq)
     if freq < 5:
       continue
-    wweight[w] = math.log(totfreq / freq)
+    wweight[w.decode('utf-8')] = math.log(totfreq / freq)
   return wweight
 
 #wweight = load_wweight_table('resources/word-frequencies.txt')

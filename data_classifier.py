@@ -1,17 +1,23 @@
 # coding: utf-8
 
-classNum = 4
-Unbalanced = 0
+classNum = 5
+Unbalanced = 4
 VeryShort = 1
 Short = 2
 Long = 3
-VeryLong = 4
+#VeryLong = 5
+Default = 0
+
+enable = False # 分類を有効にするか？無効ならmodel_default.txtを利用する
 
 def classify_from_path(textpath):
   return [classify(*(text.split("\t"))) for text in open(textpath)]
 
 def classify(text1, text2):
   #　問題の種類を分類する
+  # すっごい恣意的^^：
+  if not enable:
+    return Default
   count1 = len(text1.split())
   count2 = len(text2.split())
   tclass = Long
@@ -39,8 +45,8 @@ def to_string(textclass):
     return "short"
   elif textclass == Long:
     return "long"
-  elif textclass == VeryLong:
-    return "verylong"
+  #elif textclass == VeryLong:
+  #  return "verylong"
   elif textclass == Unbalanced:
     return "unbalanced"
-  return ""
+  return "default"

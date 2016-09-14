@@ -2,7 +2,7 @@ REM Usage: process train_input train_score test_input test_score model_output re
 
 python calculate_svr.py %1 %2 %3 %4 %5
 
-python evaluate_model.py %4 %3 %6
+python evaluate_model.py %3 %6
 
 perl correlation-noconfidence.pl %6 %4
 
@@ -21,7 +21,7 @@ REM process train\13STS.input.OnWN.txt train\13STS.gs.OnWN.txt test\13STS.input.
 
 REM process train\joint.input.txt train\joint.gs.txt test\joint.input.txt test\joint.gs.txt model.txt output.txt
 
-REM process train\joint_long.input.txt train\joint_long.gs.txt test\joint_long.input.txt test\joint_long.gs.txt model_long.txt output.txt
+REM process train\joint_long.input.txt train\joint_long.gs.txt test\joint_long.input.txt test\joint_long.gs.txt model_long.txt output.txt 
 REM process train\joint_short.input.txt train\joint_short.gs.txt test\joint_short.input.txt test\joint_short.gs.txt model_short.txt output.txt
 REM process train\joint_unbalanced.input.txt train\joint_unbalanced.gs.txt test\joint_unbalanced.input.txt test\joint_unbalanced.gs.txt model_unbalanced.txt output.txt
 REM process train\joint_veryshort.input.txt train\joint_veryshort.gs.txt test\joint_veryshort.input.txt test\joint_veryshort.gs.txt model_veryshort.txt output.txt

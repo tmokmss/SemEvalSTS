@@ -10,6 +10,8 @@ import calculate_w2v as w2v
 import calculate_tfidf as tfidf
 from calculate_match import *
 from calculate_misc import *
+from calculate_lcs import *
+from calculate_sim import *
 
 def fix_compounds(a, b):
   # もしaのある連続した2単語の連結と同じ単語がbにあれば、連結する
@@ -32,7 +34,7 @@ def fix_compounds(a, b):
 
 def load_data(path):
   sentences_pos = []
-  for l in open(path):
+  for linenum, l in enumerate(open(path)):
     # 行ごとに前処理→形態素解析
     l = l.decode('utf-8')
     l = l.replace(u'’', "'")
@@ -46,9 +48,15 @@ def load_data(path):
     l = l.replace(u";", " ")
     l = l.replace(u",", " ")
     #l = l.replace(u"é", "e")
-    s = l.strip().split('\t')
+    ls = l.strip().split('\t')
+    if len(ls) == 1:
+      ls.append("")
+      print 'strange line', linenum+1
+    elif len(ls) > 2:
+      print 'strange line', linenum+1
+      ls = ls[0:2]
     sa, sb = tuple(nltk.word_tokenize(s)
-              for s in l.strip().split('\t'))
+              for s in ls)
     # nltk.word_tokenizeによりpunctuationは分離される(isn't→is n'tなど)
     sa, sb = ([x.encode('utf-8') for x in sa],
           [x.encode('utf-8') for x in sb])
@@ -92,23 +100,28 @@ def calc_features(sa, sb):
   #f += number_features(sa, sb)
   #f += case_matches(sa, sb)
   #f += stocks_matches(sa, sb)
+  f += ngram_123_match(lca, lcb, dice)
+  f += ngram_123_match(lema, lemb, dice)
+  #f += ngram_123_match(lca, lcb, jaccard)
+  #f += ngram_123_match(lema, lemb, jaccard)
+  #f += ngram_123_match(lca, lcb, simpson)
+  #f += ngram_123_match(lema, lemb, simpson)
   f += [
-      ngram_match(lca, lcb, 1),
-      ngram_match(lca, lcb, 2),
-      ngram_match(lca, lcb, 3),
-      ngram_match(lema, lemb, 1),
-      ngram_match(lema, lemb, 2),
-      ngram_match(lema, lemb, 3),
+      #ngram_match(lca, lcb, 1, simpson),
+      #ngram_match(lca, lcb, 1, jaccard),
       #ngram_match(auga, augb, 1),  # 語順めちゃくちゃなので1gramのみ
+      lcs_match(lema, lemb),
+      #lcs_match(olca, olcb),
+      #lcs_match(lca, lcb),
       tfidf.get_tfidf_cos(lema, lemb),
       #tfidf.get_tfidf_cos(auga, augb),
-      #wn_sim_match(lema, lemb),
+      wn_sim_match(lema, lemb),
       weighted_match(olca, olcb),
       weighted_match(lema, lemb),
-      #dist_sim(nyt_sim, lema, lemb),
-      #dist_sim(wiki_sim, lema, lemb),
-      #weighted_dist_sim(nyt_sim, lema, lemb),
-      #weighted_dist_sim(wiki_sim, lema, lemb),
+      dist_sim(nyt_sim, lema, lemb),
+      dist_sim(wiki_sim, lema, lemb),
+      weighted_dist_sim(nyt_sim, lema, lemb),
+      weighted_dist_sim(wiki_sim, lema, lemb),
       relative_len_difference(lca, lcb),
       #relative_ic_difference(olca, olcb),
       num_match(numa, numb),

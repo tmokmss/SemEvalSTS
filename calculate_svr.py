@@ -65,6 +65,19 @@ def predict_from_path(inputpath, outputpath):
     result.append(*p_label)
   write_result(result, outputpath)
 
+def get_best_params(modelname):
+  if to_string(VeryShort) in modelname:
+    #return (200, 0.01, 1)
+    return (1000, 0.1, 0.002)
+  elif to_string(Short) in modelname:
+    return (500, 0.05, 0.1)
+  elif to_string(Unbalanced) in modelname:
+    return (5, 1, 0.002)
+  elif to_string(Long) in modelname:
+    return (100, 1, 0.5)
+  else:
+    return (1,1,1)
+
 if (__name__ == '__main__'):
   if len(sys.argv) < 6:
     print >>sys.stderr, "Usage: "
@@ -78,14 +91,12 @@ if (__name__ == '__main__'):
   out_name = sys.argv[5]  # モデル出力
 
   tr_data, tr_score = sts.main(train_name, train_score_name)
-  te_data, te_score = sts.main(test_name, test_score_name)
 
-  #best = (1, 0.2, 0.02) # unbalanced
-  #best = (5, 1, 0.1) # long
-  best = (1000, 0.1, 0.2) # short
-  #best = (1000, 0.1, 0.002)  # veryshort
-  if len(sys.argv) > 6:
+  best = get_best_params(out_name)
+  if False :#or True:
+    te_data, te_score = sts.main(test_name, test_score_name)
     best = grid_search(tr_data, tr_score, te_data, te_score)
+
 
   model = calculate_svr(tr_data, tr_score, *best)
   svm_save_model(out_name, model)

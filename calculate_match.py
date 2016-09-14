@@ -27,7 +27,17 @@ def weighted_match(lca, lcb):
   f1 = 2 * p * r / (p + r) if p + r > 0 else 0.
   return f1
 
-def ngram_match(sa, sb, n):
+# 結局diceが一番！
+def jaccard(lena, lenb, lenmatch):
+  return 1.*lenmatch/(lena+lenb-lenmatch)
+
+def dice(lena, lenb, lenmatch):
+  return 2.*lenmatch/(lena+lenb)
+
+def simpson(lena, lenb, lenmatch):
+  return 1.*lenmatch/min(lena, lenb)
+
+def ngram_match(sa, sb, n, coeff = dice):
   nga = make_ngrams(sa, n)
   ngb = make_ngrams(sb, n)
   matches = 0
@@ -36,14 +46,16 @@ def ngram_match(sa, sb, n):
     if c1[ng] > 0:
       c1[ng] -= 1
       matches += 1
-  p = 0.
-  r = 0.
   f1 = 1.
   if len(nga) > 0 and len(ngb) > 0:
-    p = matches / float(len(nga))
-    r = matches / float(len(ngb))
-    f1 = 2 * p * r / (p + r) if p + r > 0 else 0.
+    f1 = coeff(len(nga), len(ngb), matches)
   return f1
+
+def ngram_123_match(sa, sb, coeff = dice):
+  f = []
+  for i in xrange(1, 4):
+    f.append(ngram_match(sa, sb, i, coeff))
+  return f
 
 def num_match(numa, numb):
   # 数字があってたら類似度かなり高いはず
