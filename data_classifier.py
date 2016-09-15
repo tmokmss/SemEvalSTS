@@ -8,7 +8,7 @@ Long = 3
 #VeryLong = 5
 Default = 0
 
-enable = False # 分類を有効にするか？無効ならmodel_default.txtを利用する
+enable = True # 分類を有効にするか？無効ならmodel_default.txtを利用する
 
 def classify_from_path(textpath):
   return [classify(*(text.split("\t"))) for text in open(textpath)]
@@ -36,7 +36,7 @@ def choose_optimal_model(text1, text2):
 
 def get_model_name(textclass):
   suffix = to_string(textclass)
-  return "model_%s.txt" % (suffix)
+  return "model/model_%s.txt" % (suffix)
 
 def to_string(textclass):
   if textclass == VeryShort:

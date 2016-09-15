@@ -99,4 +99,4 @@ if (__name__ == '__main__'):
 
 
   model = calculate_svr(tr_data, tr_score, *best)
-  svm_save_model(out_name, model)
+  svm_save_model('model/' + out_name, model)

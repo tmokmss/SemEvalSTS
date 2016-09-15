@@ -8,6 +8,7 @@ import re
 from sts_utilities import *
 import calculate_w2v as w2v
 import calculate_tfidf as tfidf
+from calculate_wordnet import *
 from calculate_match import *
 from calculate_misc import *
 from calculate_lcs import *
@@ -115,7 +116,7 @@ def calc_features(sa, sb):
       #lcs_match(lca, lcb),
       tfidf.get_tfidf_cos(lema, lemb),
       #tfidf.get_tfidf_cos(auga, augb),
-      wn_sim_match(lema, lemb),
+      #wn_sim_match(lema, lemb),
       weighted_match(olca, olcb),
       weighted_match(lema, lemb),
       dist_sim(nyt_sim, lema, lemb),
