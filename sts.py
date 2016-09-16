@@ -46,8 +46,11 @@ def load_data(path):
     l = l.replace(u"´", "'")
     l = l.replace(u"-", " ")
     l = l.replace(u"/", " ")
+    l = l.replace(u":", " ")
     l = l.replace(u";", " ")
     l = l.replace(u",", " ")
+    l = l.replace(u"#", " ")
+    l = l.replace(u"$", " ")
     #l = l.replace(u"é", "e")
     ls = l.strip().split('\t')
     if len(ls) == 1:
@@ -111,7 +114,7 @@ def calc_features(sa, sb):
       tfidf.get_tfidf_cos(lema, lemb),
       tfidf.get_tfidf_cos(lca, lca),
       #tfidf.get_tfidf_cos(auga, augb),
-      wn_sim_match(lema, lemb),
+      #wn_sim_match(lema, lemb),
       #weighted_match(olca, olcb),
       weighted_match(lca, lcb),
       weighted_match(lema, lemb),
