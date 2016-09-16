@@ -81,15 +81,11 @@ def calc_features(sa, sb):
   olca = get_locase_words(sa)
   olcb = get_locase_words(sb)
 
-  numa = get_non_words(sa)
-  numb = get_non_words(sb)
-  # print numa, numb
-
   # ストップワードを除去
   lca = [w for w in olca if w not in stopwords]
   lcb = [w for w in olcb if w not in stopwords]
 
-  # 重要な品詞のみ抽出
+  # 動詞などを原型に戻す（lemmatize）
   lema = get_lemmatized_words(sa)
   lemb = get_lemmatized_words(sb)
 
@@ -98,8 +94,6 @@ def calc_features(sa, sb):
   #print auga, augb
 
   f = []
-  #f += number_features(sa, sb)
-  #f += case_matches(sa, sb)
   #f += stocks_matches(sa, sb)
   f += ngram_123_match(lca, lcb, dice)
   f += ngram_123_match(lema, lemb, dice)
@@ -115,17 +109,20 @@ def calc_features(sa, sb):
       #lcs_match(olca, olcb),
       #lcs_match(lca, lcb),
       tfidf.get_tfidf_cos(lema, lemb),
+      tfidf.get_tfidf_cos(lca, lca),
       #tfidf.get_tfidf_cos(auga, augb),
-      #wn_sim_match(lema, lemb),
-      weighted_match(olca, olcb),
+      wn_sim_match(lema, lemb),
+      #weighted_match(olca, olcb),
+      weighted_match(lca, lcb),
       weighted_match(lema, lemb),
-      dist_sim(nyt_sim, lema, lemb),
-      dist_sim(wiki_sim, lema, lemb),
-      weighted_dist_sim(nyt_sim, lema, lemb),
-      weighted_dist_sim(wiki_sim, lema, lemb),
+      dist_sim(get_nyt_sim(), lema, lemb),
+      dist_sim(get_wiki_sim(), lema, lemb),
+      weighted_dist_sim(get_nyt_sim(), lema, lemb),
+      weighted_dist_sim(get_wiki_sim(), lema, lemb),
       relative_len_difference(lca, lcb),
       #relative_ic_difference(olca, olcb),
-      num_match(numa, numb),
+      num_match(sa, sb),
+      unique_words_match(sa, sb),
     ]
   return f
 

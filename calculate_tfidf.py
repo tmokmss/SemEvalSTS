@@ -17,9 +17,9 @@ def get_tfidf_cos(la, lb):
       absum += tfa*idf * tfb*idf
   for wordb in lb:
     idf = wweight[wordb]
-    tfb = lb.count(wordb)*1./lenlb
+    tfb = lb.count(wordb)/lenlb
     b2sum += (tfb*idf)**2
   if a2sum == 0 or b2sum == 0:
-    return 0;
+    return 0
   cossim = absum/(math.sqrt(a2sum*b2sum))
   return cossim

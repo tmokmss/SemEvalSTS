@@ -17,7 +17,7 @@ stopwords = set([
 "was", "what", "when", "where", "who", "will", "with", "the", "'s", "did",
 "have", "has", "had", "were", "'ll"
 ])
-#stopwords = set([])
+#stopwords = set(["a", "the"])
 
 frequency_path = 'resources/word-frequencies_org.txt'
 
@@ -35,6 +35,9 @@ def get_locase_words(spos):
 def get_non_words(spos):
   return [num_matcher.match(x[0]).group()
     for x in spos if num_matcher.match(x[0]) is not None]
+
+def len_compress(l):
+  return math.log(1. + l)
 
 def get_lemmatized_words(sa):
   # 名詞、形容詞、動詞、副詞については原型に戻す
@@ -73,3 +76,4 @@ def load_wweight_table(path):
 
 #wweight = load_wweight_table('resources/word-frequencies.txt')
 wweight = load_wweight_table(frequency_path)
+minwweight = min(wweight.values())

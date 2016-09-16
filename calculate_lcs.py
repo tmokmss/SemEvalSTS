@@ -1,4 +1,5 @@
 # coding: utf-8
+from collections import Counter
 
 def lcs_match(sa, sb):
   matches = lcs(sa, sb)
@@ -8,6 +9,26 @@ def lcs_match(sa, sb):
     #f = matches_num/min(len(sa),len(sb))
     f = 2.*matches_num/(len(sa)+len(sb))
   return f
+
+def lcs_weight_match(sa, sb):
+  matches = lcs(sa, sb)
+  wa = Counter(sa)
+  wb = Counter(sb)
+  wsuma = sum(wweight[w] * wa[w] for w in wa)
+  wsumb = sum(wweight[w] * wb[w] for w in wb)
+  wsum = 0.
+
+  for w in wa:
+    wd = min(wa[w], wb[w])
+    wsum += wweight[w] * wd
+  p = 0.
+  r = 0.
+  if wsuma > 0 and wsum > 0:
+    p = wsum / wsuma
+  if wsumb > 0 and wsum > 0:
+    r = wsum / wsumb
+  f1 = 2 * p * r / (p + r) if p + r > 0 else 0.
+  return f1
 
 def lcs(a, b):
     lengths = [[0 for j in range(len(b)+1)] for i in range(len(a)+1)]

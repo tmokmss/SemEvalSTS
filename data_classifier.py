@@ -8,7 +8,11 @@ Long = 3
 #VeryLong = 5
 Default = 0
 
-enable = True # 分類を有効にするか？無効ならmodel_default.txtを利用する
+enable = True   # 分類を有効にするか？無効ならmodel_default.txtを利用する
+
+veryShortThres = 20
+shortThres = 40
+unbalancedThres = 15
 
 def classify_from_path(textpath):
   return [classify(*(text.split("\t"))) for text in open(textpath)]
@@ -21,11 +25,11 @@ def classify(text1, text2):
   count1 = len(text1.split())
   count2 = len(text2.split())
   tclass = Long
-  if count1 < 15 and count2 < 15:
+  if count1 < veryShortThres and count2 < veryShortThres:
     tclass = VeryShort
-  elif abs(count1-count2) > 15:
+  elif abs(count1-count2) > unbalancedThres:
     tclass = Unbalanced
-  elif count1 < 30 and count2 < 30:
+  elif count1 < shortThres and count2 < shortThres:
     tclass = Short
   return tclass
 

@@ -29,8 +29,21 @@ class Sim:
     v2 = self.bow_vec(b2)
     return abs(v1.dot(v2) / (norm(v1) + 1e-8) / (norm(v2) + 1e-8))
 
-nyt_sim = Sim('resources/nyt_words.txt', 'resources/nyt_word_vectors.txt')
-wiki_sim = Sim('resources/wikipedia_words.txt', 'resources/wikipedia_word_vectors.txt')
+nyt_sim = None
+wiki_sim = None
+
+def get_nyt_sim():
+  global nyt_sim
+  if  nyt_sim is None:
+    nyt_sim = Sim('resources/nyt_words.txt', 'resources/nyt_word_vectors.txt')
+  return nyt_sim
+
+
+def get_wiki_sim():
+  global wiki_sim
+  if  wiki_sim is None:
+    wiki_sim = Sim('resources/wikipedia_words.txt', 'resources/wikipedia_word_vectors.txt')
+  return wiki_sim
 
 def dist_sim(sim, la, lb):
   wa = Counter(la)

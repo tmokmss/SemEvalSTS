@@ -5,9 +5,9 @@ from data_classifier import *
 import sts
 import sys
 
-def calculate_svr(data, label, c = 200, g = 0.02, p = 0.5):
+def calculate_svr(data, label, c = 200, g = 0.02, p = 0.5, q = ''):
   prob = svm_problem(label, data)
-  param = svm_parameter('-s 3 -t 2 -c %f -g %f -p %f -q' % (c, g, p))
+  param = svm_parameter('-s 3 -t 2 -c %f -g %f -p %f %s' % (c, g, p, q))
   m = svm_train(prob, param)
   return m
 
@@ -25,7 +25,7 @@ def grid_search(data, label, test_data, test_label):
   for c in (1,2,5,10,20,50,100,200,500,1000):
     for g in (1,.5,.2,.1,.05,.02,.01):
       for p in (2,1,.5,.2,.1,.05,.02,.01,.005,.002):
-        model = calculate_svr(data, label, c, g, p)
+        model = calculate_svr(data, label, c, g, p, '-q')
         _, p_acc, _ = svm_predict(test_label, test_data, model, options='-q')
         corr = p_acc[2]
         if (corr > bestcorr):

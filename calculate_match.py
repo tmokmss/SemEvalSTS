@@ -57,11 +57,16 @@ def ngram_123_match(sa, sb, coeff = dice):
     f.append(ngram_match(sa, sb, i, coeff))
   return f
 
-def num_match(numa, numb):
+def num_match(sa, sb):
   # 数字があってたら類似度かなり高いはず
+  numa = get_non_words(sa)
+  numb = get_non_words(sb)
   f1 = ngram_match(numa, numb, 1)
-  # ちょいと強調する
-  #return 3.125*f1**2 - 0.125*f1
-  if len(numa) == 0 and len(numb) == 0:
-    return 0.5
+  return f1
+
+def unique_words_match(sa, sb):
+  # 固有名詞
+  ca = [x[0] for x in sa[1:] if x[0][0].isupper()]
+  cb = [x[0] for x in sb[1:] if x[0][0].isupper()]
+  f1 = ngram_match(ca, cb, 1)
   return f1
